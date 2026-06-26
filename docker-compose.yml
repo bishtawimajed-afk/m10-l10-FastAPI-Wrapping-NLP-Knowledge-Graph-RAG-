@@ -5,7 +5,6 @@
 # running externally (the learner started them via the M9/M8 Compose
 # stacks, or via `docker compose` in the Integration repo).
 #
-# TODO: author this file.
 # Required:
 # - service `api`: long-form build with `context: .` and `dockerfile:
 #   api/Dockerfile` (NOT `build: ./api` — see lab guide Task 5; the api
@@ -22,4 +21,28 @@
 #   so the page fetch resolves against `undefined`. ports 3000:3000;
 #   depends_on api with condition: service_healthy.
 
-services: {}
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - api/.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  web:
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_API_URL: "http://localhost:8000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy

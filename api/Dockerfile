@@ -1,16 +1,28 @@
-# Lab 10 — backend Dockerfile. Author this file.
-#
-# TODO: choose a slim Python base image so the runtime is small.
-# TODO: order layers so dependency install is cached between rebuilds
-#       (install requirements before copying the rest of the source).
-# TODO: install the spaCy English model needed by /extract.
-# TODO: expose the FastAPI port and start uvicorn against `api.main:app`
-#       with the build context set to the repo root (NOT `cd api &&
-#       uvicorn main:app`). The starter uses package-relative imports
-#       (`from .models import Entity`), which require uvicorn to load the
-#       package as `api.*` — running `uvicorn main:app` from inside the
-#       `api/` directory breaks these imports with `ImportError:
-#       attempted relative import with no known parent package`.
-#
-# See lab-guide.md "Containerization" section for the constraints the
-# autograder will check.
+# Choose a slim Python base image for a small runtime footprint
+FROM python:3.11-slim
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Install system dependencies needed for compiling certain packages if necessary
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy only the requirements file first to optimize Docker layer caching
+COPY api/requirements.txt /app/api/requirements.txt
+
+# Install the Python package dependencies
+RUN pip install --no-cache-dir -r /app/api/requirements.txt
+
+# Download and install the spaCy English model required by the /extract endpoint
+RUN python -m spacy download en_core_web_sm
+
+# Copy the rest of the api source code into the container
+COPY api /app/api
+
+# Expose the FastAPI port
+EXPOSE 8000
+
+# Start uvicorn from the repo root to preserve package-relative imports (api.main:app)
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -6,3 +6,5 @@ tests/
 data/
 .env
 .env.example
+.github
+venv

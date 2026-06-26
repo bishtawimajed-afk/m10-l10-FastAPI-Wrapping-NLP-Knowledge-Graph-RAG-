@@ -4,7 +4,7 @@ These are the typed-boundary contracts. They must mirror the TypeScript
 interfaces in `web/lib/types.ts` exactly — drift produces silent render
 failures in the Next.js frontend.
 """
-from typing import List, Literal
+from typing import List, Literal, Dict, Any
 
 from pydantic import BaseModel, Field
 
@@ -17,9 +17,8 @@ class ExtractRequest(BaseModel):
     The request field has a length constraint that gates 422 on empty
     or oversized input.
     """
-    # TODO: declare the request body field with a Field(...) length
-    #       constraint.
-    pass
+    # نص غير فارغ ومحدود بـ 5000 حرف كحد أقصى
+    text: str = Field(..., min_length=1, max_length=5000)
 
 
 class Entity(BaseModel):
@@ -28,9 +27,10 @@ class Entity(BaseModel):
     Field names must match the corresponding TypeScript Entity
     interface in `web/lib/types.ts` exactly.
     """
-    # TODO: declare the span's text, label, and start/end character
-    #       offsets.
-    pass
+    text: str = Field(...)
+    label: str = Field(...)
+    start: int = Field(...)
+    end: int = Field(...)
 
 
 class ExtractResponse(BaseModel):
@@ -39,8 +39,7 @@ class ExtractResponse(BaseModel):
     Per the Evaluation Methodology, the returned list is ordered by
     start offset ascending.
     """
-    # TODO: declare the field that carries the ordered list of entities.
-    pass
+    entities: List[Entity] = Field(...)
 
 
 # --- /kg/query -------------------------------------------------------
@@ -50,21 +49,20 @@ class KGRequest(BaseModel):
 
     The question field has a length constraint.
     """
-    # TODO: declare the request field with a Field(...) length
-    #       constraint.
-    pass
+    # السؤال غير فارغ وأقل من 500 حرف
+    question: str = Field(..., min_length=1, max_length=500)
 
 
 class KGResponse(BaseModel):
     """Response body for POST /kg/query."""
-    # TODO: declare the cypher string, the rows the driver returned,
-    #       and the row count.
-    pass
+    cypher: str = Field(...)
+    rows: List[Dict[str, Any]] = Field(...)
+    count: int = Field(...)
 
 
 class UnsupportedQueryDetail(BaseModel):
     """Structured detail returned on 422 from /kg/query."""
-    reason: Literal["unsupported_question"]
+    reason: Literal["unsupported_question"] = "unsupported_question"
     supported_patterns: List[str]
 
 
@@ -76,9 +74,9 @@ class RAGRequest(BaseModel):
     The question field has a length constraint; `k` is a bounded
     integer with a default.
     """
-    # TODO: declare the question field with a Field(...) length
-    #       constraint and a bounded integer `k` with a default.
-    pass
+    question: str = Field(..., min_length=1, max_length=500)
+    # القيمة الافتراضية 4 ويجب أن تقع بين 1 و 10
+    k: int = Field(default=4, ge=1, le=10)
 
 
 class Citation(BaseModel):
@@ -86,8 +84,8 @@ class Citation(BaseModel):
 
     Field names must match the TypeScript Citation interface.
     """
-    # TODO: declare the citation's chunk identifier and retrieval score.
-    pass
+    chunk_id: int = Field(...)
+    score: float = Field(...)
 
 
 class RAGResponse(BaseModel):
@@ -96,20 +94,19 @@ class RAGResponse(BaseModel):
     Grounding contract: when `answer` is not the empty-retrieval
     sentinel, `len(citations) > 0` is required.
     """
-    # TODO: declare the answer string, the list of citations, and the
-    #       confidence score.
-    pass
+    answer: str = Field(...)
+    citations: List[Citation] = Field(...)
+    confidence: float = Field(...)
 
 
 # --- Health / readiness ---------------------------------------------
 
 class HealthResponse(BaseModel):
     """Liveness response."""
-    # TODO: declare the single field returned by /healthz.
-    pass
+    status: str = Field(default="ok")
 
 
 class ReadyDetail(BaseModel):
     """Readiness detail naming each backend's status."""
-    neo4j: str
-    weaviate: str
+    neo4j: str = Field(...)
+    weaviate: str = Field(...)
