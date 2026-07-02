@@ -1,23 +1,9 @@
-"""spaCy-backed entity extraction.
+import spacy
+from typing import List
+from api.models import Entity
 
-Used by the /extract path operation. The spaCy pipeline is constructed
-once in `main.lifespan` and resolved via `Depends(get_nlp)` — do not
-load the pipeline inside this module's functions.
-"""
-from .models import Entity
-
-
-def extract_entities(text: str, nlp) -> list[Entity]:
-    """Run spaCy NER on `text` and return entities ordered by `start`.
-
-    Inputs:
-        text — input string.
-        nlp — loaded spaCy pipeline (passed in; do not load here).
-    Returns:
-        list[Entity] ordered by `start` ascending (the Evaluation
-        Methodology requires monotonic non-decreasing `start`).
-    """
-    doc = nlp(text)
+def extract_entities(nlp_model, text: str) -> List[Entity]:
+    doc = nlp_model(text)
     entities = []
     
     for ent in doc.ents:
@@ -29,6 +15,6 @@ def extract_entities(text: str, nlp) -> list[Entity]:
                 end=ent.end_char
             )
         )
-        
-    entities.sort(key=lambda e: e.start)
+    
+    entities.sort(key=lambda x: x.start)
     return entities

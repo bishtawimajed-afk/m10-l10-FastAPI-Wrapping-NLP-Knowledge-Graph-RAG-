@@ -1,22 +1,15 @@
-// TypeScript interfaces — must mirror api/models.py exactly.
-//
-// Field name drift between these interfaces and the Pydantic shapes is
-// silent: the page renders nothing because the destructure fails.
-// Use snake_case here for any field that is snake_case in the Pydantic
-// model — do not camelCase.
-
 export interface Entity {
   text: string;
   label: string;
-  start: number;
-  end: number;
+  start: int;
+  end: int;
 }
 
 export interface ExtractResponse {
   entities: Entity[];
 }
 
-export interface KGResponse {
+export interface KGQueryResponse {
   cypher: string;
   rows: Record<string, any>[];
   count: number;
@@ -27,7 +20,7 @@ export interface Citation {
   score: number;
 }
 
-export interface RAGResponse {
+export interface RAGQueryResponse {
   answer: string;
   citations: Citation[];
   confidence: number;

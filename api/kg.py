@@ -1,22 +1,14 @@
 from neo4j import Session
-from fastapi import HTTPException, status
-from api.w9b_mapper import map_query, UnsupportedQueryError
+from typing import Dict, Any
+from api.w9b_mapper import map_query
 
-def execute_kg_query(question: str, session: Session):
-    try:
-        cypher_query = map_query(question)
-        result = session.run(cypher_query)
-        rows = [record.data() for record in result]
-        return {
-            "cypher": cypher_query,
-            "rows": rows,
-            "count": len(rows)
-        }
-    except UnsupportedQueryError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "reason": "unsupported_question",
-                "supported_patterns": getattr(e, "supported_patterns", [])
-            }
-        )
+def execute_kg_query(session: Session, question: str) -> Dict[str, Any]:
+    cypher_query, params = map_query(question)
+    result = session.run(cypher_query, **params)
+    rows = [record.data() for record in result]
+    
+    return {
+        "cypher": cypher_query,
+        "rows": rows,
+        "count": len(rows)
+    }
